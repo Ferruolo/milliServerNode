@@ -1,5 +1,4 @@
 use std::collections::VecDeque;
-use std::mem::swap;
 use std::sync::mpsc;
 use std::sync::mpsc::{Receiver, Sender};
 use std::thread;
@@ -36,7 +35,7 @@ struct Worker {
 
 
 impl Worker {
-    fn new(id: usize, return_address: &Sender<ThreadSignal>) -> (Self) {
+    fn new(id: usize, return_address: &Sender<ThreadSignal>) -> Self {
         let ret = return_address.clone();
         let (tx, rx): (Sender<ThreadSignal>, Receiver<ThreadSignal>) = mpsc::channel();
         let self_id = id;
@@ -97,7 +96,7 @@ impl ThreadManager {
                             }
                         }
                     }
-                    Available(i, w) => {
+                    Available(_, w) => {
                         match signal_queue.pop_front() {
                             None => {
                                 worker_queue.push_back(w)
@@ -121,7 +120,7 @@ impl ThreadManager {
                         }
                     }
                     Kill => {
-                        for i in 0..n_threads {
+                        for _ in 0..n_threads {
                             signal_queue.push_back(Kill)
                         }
                         killswitch = true;
@@ -149,8 +148,17 @@ impl ThreadManager {
             t.join_handle.join().unwrap();
         }
 
-        // let mut master_thread = None;
-        // swap(&mut self.master_thread, &mut master_thread);
         self.master_thread.join().unwrap();
+    }
+}
+
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn tests_are_testy() {
+        assert_eq!(true, true);
     }
 }

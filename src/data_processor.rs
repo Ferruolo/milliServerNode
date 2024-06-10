@@ -43,8 +43,8 @@ impl <T> DataStore<T> {
         }
     }
 
-    fn insert(&mut self, key:u64, val: &T) {
-        return self.insert(key, val);
+    fn insert(&mut self, key:u64, val: T) -> Option<DatumType<T>> {
+        return self.map.insert(key, val);
     }
 
 }
