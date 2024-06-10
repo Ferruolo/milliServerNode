@@ -1,4 +1,5 @@
 use std::collections::VecDeque;
+use std::mem::swap;
 use std::sync::mpsc;
 use std::sync::mpsc::{Receiver, Sender};
 use std::thread;
@@ -6,12 +7,12 @@ use std::thread::JoinHandle;
 use crate::{executor, Job};
 use crate::thread_manager::ThreadSignal::*;
 
-// TODO: Make this a functional language
+//TODO: Make this functional rather than imperative?? Just do whatever is cleaner
+
 
 enum ThreadSignal {
     Task(Job),
-    TaskComplete(usize),
-    Available(usize),
+    Available(usize, Sender<ThreadSignal>),
     Null,
     Kill,
     ErrorInstruction
@@ -20,9 +21,9 @@ enum ThreadSignal {
 
 struct ThreadManager {
     num_threads: usize,
-    task_queue: VecDeque<Job>,
-    worker_queue: VecDeque<Sender<ThreadSignal>>,
     threads: Vec<Worker>,
+    master_thread: Option<JoinHandle<()>>,
+    master_mailbox: Sender<ThreadSignal>
 }
 
 
@@ -40,12 +41,12 @@ impl Worker {
         let (tx, rx): (Sender<ThreadSignal>, Receiver<ThreadSignal>) = mpsc::channel();
         let self_id = id;
         let t = thread::spawn(move || {
-            ret.send(Available(self_id)).unwrap();
+            ret.send(Available(self_id, tx.clone())).unwrap();
             'threadLoop: loop {
                 match rx.recv().unwrap_or(Null) {
                     Task(job) => {
                         executor(job);
-                        ret.send(TaskComplete(self_id)).unwrap();
+                        ret.send(Available(self_id, tx.clone())).unwrap();
                     }
                     Kill => {
                         break 'threadLoop;
@@ -72,20 +73,84 @@ impl Worker {
 impl ThreadManager {
     fn new(n_threads: usize) -> ThreadManager {
         let mut threads = Vec::new();
-        let (local_send, local_recv) = mpsc::channel();
+
+        let (master_send, master_recv) = mpsc::channel();
         for i in 0..n_threads {
-            threads.push(Worker::new(i, &local_send));
+            threads.push(Worker::new(i, &master_send));
         }
+
+
+        let master_thread = thread::spawn(move || {
+            let mut signal_queue: VecDeque<ThreadSignal> = VecDeque::new();
+            let mut worker_queue: VecDeque<Sender<ThreadSignal>> = VecDeque::new();
+            let mut killswitch = false;
+
+            loop {
+                match master_recv.recv().unwrap_or(Null) {
+                    Task(t) => {
+                        match worker_queue.pop_front() {
+                            None => {
+                                signal_queue.push_back(Task(t));
+                            }
+                            Some(w) => {
+                                w.send(Task(t)).unwrap()
+                            }
+                        }
+                    }
+                    Available(i, w) => {
+                        match signal_queue.pop_front() {
+                            None => {
+                                worker_queue.push_back(w)
+                            }
+                            Some(t) => {
+                                w.send(t).unwrap()
+                            }
+                        }
+                    }
+                    Null => {
+                        if killswitch {
+                            break;
+                        }
+                        if signal_queue.len() > 0 && worker_queue.len() > 0{
+                            match (signal_queue.pop_front(), worker_queue.pop_front()) {
+                                (Some(s), Some(w)) => {
+                                    w.send(s).unwrap()
+                                }
+                                (_, _) => panic!("Issue with non-empty queues")
+                            }
+                        }
+                    }
+                    Kill => {
+                        for i in 0..n_threads {
+                            signal_queue.push_back(Kill)
+                        }
+                        killswitch = true;
+                    }
+                    ErrorInstruction => {}
+                }
+            }
+        });
 
         return Self {
             num_threads: n_threads,
-            task_queue: Default::default(),
-            worker_queue: Default::default(),
             threads,
+            master_thread: Some(master_thread),
+            master_mailbox: master_send.clone(),
         }
     }
 
-    fn schedule(job: Job) {
+    fn schedule(&mut self, job: Job) {
+        self.master_mailbox.send(Task(job)).unwrap()
+    }
 
+    fn terminate(&mut self) {
+        self.master_mailbox.send(Kill).unwrap();
+        while let Some(t) = self.threads.pop() {
+            t.join_handle.join().unwrap();
+        }
+
+        // let mut master_thread = None;
+        // swap(&mut self.master_thread, &mut master_thread);
+        self.master_thread.join().unwrap();
     }
 }

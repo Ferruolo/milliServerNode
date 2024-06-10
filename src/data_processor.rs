@@ -2,8 +2,6 @@ use std::collections::HashMap;
 use std::mem::swap;
 use crate::data_processor::DatumType::{KeyNotFound, OutForProcessing};
 
-
-
 enum DatumType <T> {
     OutForProcessing,
     Available(T),
