@@ -1,4 +1,5 @@
 use std::collections::VecDeque;
+use std::mem::swap;
 use std::sync::mpsc;
 use std::sync::mpsc::{Receiver, Sender};
 use std::thread;
@@ -29,8 +30,8 @@ struct ThreadManager {
 struct Worker {
     id: usize,
     join_handle: JoinHandle<()>,
-    sender: Sender<ThreadSignal>,
-    receiver: Receiver<ThreadSignal>,
+    sender: Sender<ThreadSignal>
+    // receiver: Receiver<ThreadSignal>,
 }
 
 
@@ -38,14 +39,17 @@ impl Worker {
     fn new(id: usize, return_address: &Sender<ThreadSignal>) -> Self {
         let ret = return_address.clone();
         let (tx, rx): (Sender<ThreadSignal>, Receiver<ThreadSignal>) = mpsc::channel();
+        let thread_send = tx.clone();
         let self_id = id;
+
+
         let t = thread::spawn(move || {
-            ret.send(Available(self_id, tx.clone())).unwrap();
+            ret.send(Available(self_id, thread_send.clone())).unwrap();
             'threadLoop: loop {
                 match rx.recv().unwrap_or(Null) {
                     Task(job) => {
                         executor(job);
-                        ret.send(Available(self_id, tx.clone())).unwrap();
+                        ret.send(Available(self_id, thread_send.clone())).unwrap();
                     }
                     Kill => {
                         break 'threadLoop;
@@ -63,8 +67,7 @@ impl Worker {
         return Self {
             id,
             join_handle: t,
-            sender: tx,
-            receiver: rx,
+            sender: tx
         };
     }
 }
@@ -147,8 +150,9 @@ impl ThreadManager {
         while let Some(t) = self.threads.pop() {
             t.join_handle.join().unwrap();
         }
-
-        self.master_thread.join().unwrap();
+        let mut master_thread = None;
+        swap(&mut master_thread, &mut self.master_thread);
+        master_thread.join().unwrap();
     }
 }
 
