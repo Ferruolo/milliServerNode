@@ -1,6 +1,11 @@
 mod data_processor;
 mod thread_manager;
 
+#[macro_use]
+mod macros;
+mod loom_config;
+
+
 enum Mutations {
     Null,
     Insert,
