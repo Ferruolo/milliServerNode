@@ -1,7 +1,5 @@
 extern crate crossbeam;
 
-
-// src/macros.rs
 #[macro_export]
 macro_rules! timed_test {
     ($test_name:ident, $timeout:expr, $test_impl:ident) => {

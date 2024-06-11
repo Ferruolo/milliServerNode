@@ -177,9 +177,6 @@ impl ThreadManager {
 
 #[cfg(test)]
 mod tests {
-    use crate::timed_test;
-    use super::*;
-
     //Define the test implementation
     #[cfg(loom)]
     fn timed_example_impl() {
@@ -188,7 +185,6 @@ mod tests {
             manager.terminate();
         })
     }
-
 
 
     // // Use the macro to create a timed test

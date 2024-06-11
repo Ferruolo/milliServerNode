@@ -12,22 +12,21 @@ enum Mutations {
     Add,
     Subtract,
     Return,
-    Delete
+    Delete,
 }
 
 
 enum Job {
     Kill,
-    CheckInWithMeAndDoYourJob(usize)
+    CheckInWithMeAndDoYourJob(usize),
 }
+
 fn executor(job: Job) {
     match job {
         Job::CheckInWithMeAndDoYourJob(i) => {
             println!("Job number {i} received")
         }
-        Job::Kill => {
-
-        }
+        Job::Kill => {}
     }
 }
 

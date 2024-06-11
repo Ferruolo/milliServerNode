@@ -1,18 +1,19 @@
 use std::collections::HashMap;
 use std::mem::swap;
+
 use crate::data_processor::DatumType::{KeyNotFound, OutForProcessing};
 
-enum DatumType <T> {
+enum DatumType<T> {
     OutForProcessing,
     Available(T),
-    KeyNotFound
+    KeyNotFound,
 }
 
-struct DataStore <T> {
-    map: HashMap<u64, DatumType<T>>
+struct DataStore<T> {
+    map: HashMap<u64, DatumType<T>>,
 }
 
-impl <T> DataStore<T> {
+impl<T> DataStore<T> {
     fn get(&mut self, key: u64) -> DatumType<T> {
         return match self.map.get_mut(&key) {
             None => {
@@ -23,7 +24,7 @@ impl <T> DataStore<T> {
                 swap(&mut swapper, x);
                 swapper
             }
-        }
+        };
     }
 
     fn set(&mut self, key: u64, val: T) -> Option<&T> {
@@ -38,11 +39,10 @@ impl <T> DataStore<T> {
                 }
                 _ => None
             },
-        }
+        };
     }
 
-    fn insert(&mut self, key:u64, val: T) -> Option<DatumType<T>> {
+    fn insert(&mut self, key: u64, val: T) -> Option<DatumType<T>> {
         return self.map.insert(key, DatumType::Available(val));
     }
-
 }
