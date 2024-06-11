@@ -152,7 +152,14 @@ impl ThreadManager {
         }
         let mut master_thread = None;
         swap(&mut master_thread, &mut self.master_thread);
-        master_thread.join().unwrap();
+        match master_thread {
+            None => {
+                panic!("Beating a dead horse")
+            }
+            Some(t) => {
+                t.join().unwrap();
+            }
+        }
     }
 }
 

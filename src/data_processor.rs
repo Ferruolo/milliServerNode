@@ -26,25 +26,23 @@ impl <T> DataStore<T> {
         }
     }
 
-    fn set(&mut self, key: u64, val: &T) -> Option<&T> {
+    fn set(&mut self, key: u64, val: T) -> Option<&T> {
         return match self.map.get_mut(&key) {
             None => {
                 None
             }
-            Some(x) => {
-                match x {
-                    DatumType::Available(x) => {
-                        *x = val;
-                        return Some(x);
-                    }
-                    _ => None
+            Some(x) => match x {
+                DatumType::Available(x) => {
+                    *x = val;
+                    return Some(x);
                 }
-            }
+                _ => None
+            },
         }
     }
 
     fn insert(&mut self, key:u64, val: T) -> Option<DatumType<T>> {
-        return self.map.insert(key, val);
+        return self.map.insert(key, DatumType::Available(val));
     }
 
 }
