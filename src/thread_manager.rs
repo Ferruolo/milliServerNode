@@ -1,14 +1,12 @@
 use std::collections::VecDeque;
 use std::mem::swap;
-use std::time::Duration;
-
-use crate::{executor, Job};
 use std::sync::mpsc;
 use std::sync::mpsc::{Receiver, Sender};
 use std::thread;
 use std::thread::JoinHandle;
+use std::time::Duration;
 
-
+use crate::{executor, Job};
 use crate::thread_manager::ThreadSignal::*;
 
 //TODO: Make this functional rather than imperative?? Just do whatever is cleaner
@@ -72,6 +70,7 @@ struct ThreadManager {
     threads: Vec<Worker>,
     master_thread: Option<JoinHandle<()>>,
     master_mailbox: Sender<ThreadSignal>,
+    terminated: bool,
 }
 
 impl ThreadManager {
@@ -147,11 +146,14 @@ impl ThreadManager {
             threads,
             master_thread: Some(master_thread),
             master_mailbox: master_send.clone(),
+            terminated: false,
         };
     }
 
     fn schedule(&mut self, job: Job) {
-        self.master_mailbox.send(Task(job)).unwrap()
+        if !self.terminated {
+            self.master_mailbox.send(Task(job)).unwrap();
+        }
     }
 
     fn terminate(&mut self) {
@@ -171,25 +173,68 @@ impl ThreadManager {
                 t.join().unwrap();
             }
         }
+        self.terminated = true;
     }
-
 }
 
 
 #[cfg(test)]
 mod tests {
+    use std::sync::{Arc, Mutex};
+    use crate::Job::CheckInWithMeAndDoYourJob;
     use crate::timed_test;
+
     use super::*;
 
-    // Define the test implementation
-    #[test]
-    fn timed_example_impl() {
+    fn basic_init_kill() {
         let mut manager = ThreadManager::new(4);
         manager.terminate();
     }
 
     // Use the macro to create a timed test
     #[test]
-    timed_test!(timed_example, 1, timed_example_impl);
+    timed_test!(timed_init_kill, 1, basic_init_kill);
+
+    fn single_job_execute() {
+        let num_jobs: u8 = 10;
+        let mut manager = ThreadManager::new(4);
+        let items: Vec<Arc<Mutex<u8>>> = (0..num_jobs).map(|x| Arc::new(Mutex::new(x))).collect();
+
+        for (idx, item) in items.iter().enumerate() {
+            assert_eq!(*item.lock().unwrap(), idx as u8);
+        }
+
+        for i in 0..num_jobs {
+            let item_copy = Arc::clone(&items[i as usize]);
+            let fxn = Arc::new(move || {
+                println!("Executing Job {i}");
+                let new_val = *item_copy.lock().unwrap() + 1;
+                *item_copy.lock().unwrap() = new_val;
+                println!("Job {i} Executed");
+            });
+
+
+            manager.schedule(CheckInWithMeAndDoYourJob(fxn));
+        }
+
+
+        for (idx, item) in items.iter().enumerate() {
+            println!("Test Idx being conducted");
+            let item_copy = Arc::clone(item);
+            let expected_idx = idx as u8 + 1;
+            let fxn = Arc::new(move || {
+                assert_eq!(*item_copy.lock().unwrap(), expected_idx);
+            });
+            manager.schedule(CheckInWithMeAndDoYourJob(fxn));
+        }
+
+        manager.terminate();
+    }
+
+
+
+
+    #[test]
+    timed_test!(timed_single_job_execute, 1, single_job_execute);
 }
 

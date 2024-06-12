@@ -1,3 +1,6 @@
+use std::char::from_u32_unchecked;
+use std::sync::Arc;
+
 mod data_processor;
 mod thread_manager;
 
@@ -16,13 +19,13 @@ enum Mutations {
 
 enum Job {
     Kill,
-    CheckInWithMeAndDoYourJob(usize),
+    CheckInWithMeAndDoYourJob(Arc<dyn Fn() + Send + Sync>),
 }
 
 fn executor(job: Job) {
     match job {
-        Job::CheckInWithMeAndDoYourJob(i) => {
-            println!("Job number {i} received")
+        Job::CheckInWithMeAndDoYourJob(f) => {
+            f();
         }
         Job::Kill => {}
     }
