@@ -3,8 +3,6 @@ mod thread_manager;
 
 #[macro_use]
 mod macros;
-mod loom_config;
-// mod sync;
 
 enum Mutations {
     Null,
