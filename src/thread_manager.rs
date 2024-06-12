@@ -3,14 +3,15 @@ use std::mem::swap;
 use std::time::Duration;
 
 use crate::{executor, Job};
-use crate::loom_config::mpsc;
-use crate::loom_config::mpsc::{Receiver, Sender};
-use crate::loom_config::thread;
-use crate::loom_config::thread::JoinHandle;
+use std::sync::mpsc;
+use std::sync::mpsc::{Receiver, Sender};
+use std::thread;
+use std::thread::JoinHandle;
+
+
 use crate::thread_manager::ThreadSignal::*;
 
 //TODO: Make this functional rather than imperative?? Just do whatever is cleaner
-
 
 enum ThreadSignal {
     Task(Job),
@@ -19,7 +20,6 @@ enum ThreadSignal {
     Kill,
     ErrorInstruction,
 }
-
 
 struct Worker {
     id: usize,
@@ -172,21 +172,24 @@ impl ThreadManager {
             }
         }
     }
+
 }
 
 
 #[cfg(test)]
 mod tests {
-    //Define the test implementation
-    #[cfg(loom)]
+    use crate::timed_test;
+    use super::*;
+
+    // Define the test implementation
+    #[test]
     fn timed_example_impl() {
-        loom::model(|| {
-            let mut manager = ThreadManager::new(4);
-            manager.terminate();
-        })
+        let mut manager = ThreadManager::new(4);
+        manager.terminate();
     }
 
-
-    // // Use the macro to create a timed test
-    // timed_test!(timed_example, 10, timed_example_impl);
+    // Use the macro to create a timed test
+    #[test]
+    timed_test!(timed_example, 1, timed_example_impl);
 }
+
