@@ -5,7 +5,6 @@ use std::sync::mpsc::{Receiver, Sender};
 use std::thread;
 use std::thread::JoinHandle;
 use std::time::Duration;
-
 use crate::{executor, Job};
 use crate::thread_manager::ThreadSignal::*;
 
@@ -14,6 +13,7 @@ use crate::thread_manager::ThreadSignal::*;
 enum ThreadSignal {
     Task(Job),
     Available(usize, Sender<ThreadSignal>),
+    ParseJobComplete(),
     Null,
     Kill,
     ErrorInstruction,
@@ -137,6 +137,7 @@ impl ThreadManager {
                         killswitch = true;
                     }
                     ErrorInstruction => {}
+                    _ => {}
                 }
             }
         });
@@ -181,7 +182,8 @@ impl ThreadManager {
 #[cfg(test)]
 mod tests {
     use std::sync::{Arc, Mutex};
-    use crate::Job::CheckInWithMeAndDoYourJob;
+
+    use crate::Job::Execute;
     use crate::timed_test;
 
     use super::*;
@@ -214,7 +216,7 @@ mod tests {
             });
 
 
-            manager.schedule(CheckInWithMeAndDoYourJob(fxn));
+            manager.schedule(Execute(fxn));
         }
 
 
@@ -225,14 +227,11 @@ mod tests {
             let fxn = Arc::new(move || {
                 assert_eq!(*item_copy.lock().unwrap(), expected_idx);
             });
-            manager.schedule(CheckInWithMeAndDoYourJob(fxn));
+            manager.schedule(Execute(fxn));
         }
 
         manager.terminate();
     }
-
-
-
 
     #[test]
     timed_test!(timed_single_job_execute, 1, single_job_execute);
