@@ -4,10 +4,13 @@
 * Will be extended, optimized to work with database
 */
 
+use crate::internal_lang::Type::{*};
+
 enum Type {
     Unit,
     Integer(i32), // Possibly too big on the i32?
     Float(f32),   // Does rust have BFloat16
+    Boolean(bool),
     Arrow(Type, Type),
     Prod(Type, Type),
     Sum(Type, Type),
@@ -64,15 +67,21 @@ fn subst(e_1: Expressions, a: Expressions, e_2: Expressions) { // Not sure how t
 }
 
 
-fn compile(e: Expressions) {
+fn compile(e: Expressions) -> Type {
     match e {
         Expressions::Unit => {
-            return
+            return Unit
         }
-        Expressions::Int(_) => {}
-        Expressions::Float(_) => {}
-        Expressions::Bool(_) => {}
-        Expressions::Neg(_) => {}
+        Expressions::Int(i) => {return Integer(i)}
+        Expressions::Float(f) => {
+            return Float(f)
+        }
+        Expressions::Bool(b) => {
+            return Boolean(b)
+        }
+        Expressions::Neg(e) => {
+
+        }
         Expressions::Plus(_, _) => {}
         Expressions::Minus(_, _) => {}
         Expressions::Times(_, _) => {}
