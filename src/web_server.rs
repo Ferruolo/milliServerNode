@@ -11,7 +11,7 @@ use crate::thread_manager::ThreadManager;
 * Mocking up real world functionality before I start getting into parsing/command structure
 */
 
-pub fn run_fake_web_server(n_threads: usize, mut fake_data: Vec<FakeDatum>, mut fake_commands: Vec<ImperativeOps<FakeDatum>>) {
+pub fn run_fake_web_server(n_threads: usize, fake_data: Vec<FakeDatum>, mut fake_commands: Vec<ImperativeOps<FakeDatum>>) {
     let mut operations: VecDeque<ImperativeOps<FakeDatum>> = Default::default();
 
     //Please tell me there's an easier way to copy between the two
@@ -87,7 +87,7 @@ fn wrap_and_schedule(threadpool: &mut ThreadManager, new_job: fn()) {
     threadpool.schedule(Execute(wrapped_job));
 }
 
-fn get_datum(mut datastore: &Arc<Mutex<DataManager<FakeDatum>>>, k: KeyType) -> Option<Arc<Mutex<FakeDatum>>> {
+fn get_datum(datastore: &Arc<Mutex<DataManager<FakeDatum>>>, k: KeyType) -> Option<Arc<Mutex<FakeDatum>>> {
     let datum = {
         let mut db = datastore.lock().unwrap();
         let datum = db.get_reference(k);
