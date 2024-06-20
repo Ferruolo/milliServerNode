@@ -1,10 +1,27 @@
 
 /*
-* Internal implementation of the simply typed lambda calculus, with extensions
+* GOAL: Internal implementation of the simply typed lambda calculus, with extensions
 * Will be extended, optimized to work with database
 */
-
 use crate::internal_lang::Type::{*};
+
+
+/*
+* CURRENT STATUS:
+* Basic Read, write commands
+*/
+
+pub(crate) type KeyType = usize;
+
+pub(crate)  enum ImperativeOps<T> {
+    Get(KeyType),
+    Set(KeyType, T),
+    SHUTDOWN
+}
+
+
+
+
 
 enum Type {
     Unit,
@@ -65,49 +82,4 @@ union OpType {
 fn subst(e_1: Expressions, a: Expressions, e_2: Expressions) { // Not sure how to do this one rn
 
 }
-
-
-fn compile(e: Expressions) -> Type {
-    match e {
-        Expressions::Unit => {
-            return Unit
-        }
-        Expressions::Int(i) => {return Integer(i)}
-        Expressions::Float(f) => {
-            return Float(f)
-        }
-        Expressions::Bool(b) => {
-            return Boolean(b)
-        }
-        Expressions::Neg(e) => {
-
-        }
-        Expressions::Plus(_, _) => {}
-        Expressions::Minus(_, _) => {}
-        Expressions::Times(_, _) => {}
-        Expressions::Divide(_, _) => {}
-        Expressions::Mod(_, _) => {}
-        Expressions::Lt(_, _) => {}
-        Expressions::Eq(_, _) => {}
-        Expressions::Gt(_, _) => {}
-        Expressions::LTE(_, _) => {}
-        Expressions::GTE(_, _) => {}
-        Expressions::And(_, _) => {}
-        Expressions::Or(_, _) => {}
-        Expressions::If(_, _) => {}
-        Expressions::Var(_) => {}
-        Expressions::Let(_, _, _) => {}
-        Expressions::Ap(_, _) => {}
-        Expressions::Pair(_, _) => {}
-        Expressions::LetPair(_, _, _, _) => {}
-        Expressions::PrjL(_) => {}
-        Expressions::PrjR(_) => {}
-        Expressions::InjL(_, _) => {}
-        Expressions::InjR(_, _) => {}
-        Expressions::Case(_, _, _) => {}
-        Expressions::Roll(_) => {}
-        Expressions::Unroll(_) => {}
-    }
-}
-
 

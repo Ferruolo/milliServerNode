@@ -25,6 +25,13 @@ struct Worker {
     sender: Sender<ThreadSignal>,
 }
 
+pub struct ThreadManager {
+    num_threads: usize,
+    threads: Vec<Worker>,
+    master_thread: Option<JoinHandle<()>>,
+    master_mailbox: Sender<ThreadSignal>,
+    terminated: bool,
+}
 
 impl Worker {
     fn new(id: usize, return_address: &Sender<ThreadSignal>) -> Self {
@@ -65,16 +72,10 @@ impl Worker {
     }
 }
 
-struct ThreadManager {
-    num_threads: usize,
-    threads: Vec<Worker>,
-    master_thread: Option<JoinHandle<()>>,
-    master_mailbox: Sender<ThreadSignal>,
-    terminated: bool,
-}
+
 
 impl ThreadManager {
-    fn new(n_threads: usize) -> ThreadManager {
+    pub(crate) fn new(n_threads: usize) -> ThreadManager {
         let mut threads = Vec::new();
 
         let (master_send, master_recv) = mpsc::channel();
@@ -151,13 +152,13 @@ impl ThreadManager {
         };
     }
 
-    fn schedule(&mut self, job: Job) {
+    pub fn schedule(&mut self, job: Job) {
         if !self.terminated {
             self.master_mailbox.send(Task(job)).unwrap();
         }
     }
 
-    fn terminate(&mut self) {
+    pub fn terminate(&mut self) {
         println!("Send kill message to all threads");
         self.master_mailbox.send(Kill).unwrap();
         println!("Waiting on every thread to join");

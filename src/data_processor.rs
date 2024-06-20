@@ -1,48 +1,41 @@
 use std::collections::HashMap;
-use std::mem::swap;
+use std::sync::{Arc, Mutex};
+use crate::internal_lang::KeyType;
 
-use crate::data_processor::DatumType::{KeyNotFound, OutForProcessing};
-
-enum DatumType<T> {
-    OutForProcessing,
-    Available(T),
-    KeyNotFound,
+pub struct DataManager<T> {
+    map: HashMap<KeyType, Arc<Mutex<T>>>,
+    prev_size: usize,
 }
 
-struct DataStore<T> {
-    map: HashMap<u64, DatumType<T>>,
-}
+impl<T> DataManager<T> {
+    pub(crate) fn new() -> Self <T> {
+        let initial_reserve: usize = 100; // Arbitrary Value
 
-impl<T> DataStore<T> {
-    fn get(&mut self, key: u64) -> DatumType<T> {
-        return match self.map.get_mut(&key) {
-            None => {
-                KeyNotFound
-            }
-            Some(x) => {
-                let mut swapper = OutForProcessing;
-                swap(&mut swapper, x);
-                swapper
-            }
+        let mut map: HashMap<KeyType, Arc<Mutex<T>>> = HashMap::new();
+        map.reserve(initial_reserve);
+        return Self {
+            map,
+            prev_size: initial_reserve,
         };
     }
 
-    fn set(&mut self, key: u64, val: T) -> Option<&T> {
-        return match self.map.get_mut(&key) {
+    pub(crate) fn get_reference(&mut self, key: KeyType) -> Option<Arc<Mutex<T>>> {
+        match self.map.get_mut(&key) {
             None => {
                 None
             }
-            Some(x) => match x {
-                DatumType::Available(x) => {
-                    *x = val;
-                    return Some(x);
-                }
-                _ => None
-            },
-        };
+            Some(item) => {
+                Some(Arc::clone(item))
+            }
+        }
     }
 
-    fn insert(&mut self, key: u64, val: T) -> Option<DatumType<T>> {
-        return self.map.insert(key, DatumType::Available(val));
+    pub(crate) fn insert(&mut self, key: KeyType, datum: T) -> Option<Arc<Mutex<T>>> {
+        if self.prev_size <= self.map.len() {
+            self.map.reserve(self.prev_size * 2);
+            self.prev_size = self.map.len();
+        }
+
+        self.map.insert(key, Arc::new(Mutex::new(datum)))
     }
 }
