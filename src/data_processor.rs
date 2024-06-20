@@ -19,8 +19,8 @@ impl<T> DataManager<T> {
         };
     }
 
-    pub fn get_reference(&mut self, key: KeyType) -> Option<Arc<Mutex<T>>> {
-        match self.map.get_mut(&key) {
+    pub fn get_reference(&mut self, key: &KeyType) -> Option<Arc<Mutex<T>>> {
+        match self.map.get_mut(key) {
             None => {
                 None
             }
@@ -30,7 +30,7 @@ impl<T> DataManager<T> {
         }
     }
 
-    pub fn insert(&mut self, key: KeyType, datum: T) -> Option<Arc<Mutex<T>>> {
+    pub fn insert(&mut self, key: &KeyType, datum: T) -> Option<Arc<Mutex<T>>> {
         if self.prev_size <= self.map.len() {
             self.map.reserve(self.prev_size * 2);
             self.prev_size = self.map.len();

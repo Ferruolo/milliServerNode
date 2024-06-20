@@ -1,9 +1,9 @@
-use rand::{random, Rng, thread_rng};
 
+
+use rand::{random, Rng, thread_rng};
 use serverNode::internal_lang::{FakeDatum, ImperativeOps, KeyType};
 use serverNode::internal_lang::ImperativeOps::{Get, Set};
 use serverNode::web_server::run_fake_web_server;
-
 
 // cargo run  846.61s user 8.23s system 99% cpu 14:19.16 total
 
@@ -31,15 +31,13 @@ fn main() {
             if random()
             {
                 // add Setter
-                let new_entry =
-                    thread_rng().gen_range(0..MAX_VAL) as FakeDatum;
+                let new_entry = thread_rng().gen_range(0..MAX_VAL) as FakeDatum;
                 Set(key_num, new_entry)
             } else {
                 // add Getter
                 Get(key_num)
             }
         });
-
     }
     run_fake_web_server(N_THREADS, initial_data, commands_list);
 
