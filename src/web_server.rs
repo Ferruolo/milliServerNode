@@ -18,43 +18,54 @@ fn run_fake_web_server(n_threads: usize) {
     let mut threadpool = ThreadManager::new(n_threads);
     let mut datastore: Arc<Mutex<DataManager<FakeDatum>>> = Arc::new(Mutex::new(DataManager::new()));
 
-    'fakeCommandLoop: while let Some(next) = operations.pop_front() {
-        match next {
-            ImperativeOps::Get(k) => {
-                let new_job = || {
-                    let datum = get_datum(&datastore, k);
-                    match datum {
-                        None => {
-                            println!("Item {} not found", k)
-                        }
-                        Some(d) => {
-                            let x = d.lock().unwrap().clone();
-                            println!("Key {} retrieved {}", k, x);
-                        }
-                    }
-                };
-
-                wrap_and_schedule(&mut threadpool, new_job);
-            }
-            ImperativeOps::Set(k, v) => {
-                let new_job = || {
-                    let datum = get_datum(&datastore, k);
-                    match datum {
-                        None => {
-                            datastore.lock().unwrap().insert(k, v);
-                        }
-                        Some(d) => {
-                            *d.lock().unwrap() = v;
-                        }
-                    }
-                };
-                wrap_and_schedule(&mut threadpool, new_job);
-            }
-            ImperativeOps::SHUTDOWN => {
-                break 'fakeCommandLoop;
-            }
+    'fakeCommandLoop: while let Some(cmd) = operations.pop_front() {
+        if handle_command(&mut threadpool, &mut datastore, cmd) {
+            break 'fakeCommandLoop;
         }
     }
+}
+
+fn handle_command(
+    mut threadpool: &mut ThreadManager,
+    datastore: &mut Arc<Mutex<DataManager<FakeDatum>>>,
+    cmd: ImperativeOps<FakeDatum>)
+    -> bool {
+    match cmd {
+        ImperativeOps::Get(k) => {
+            let new_job = || {
+                let datum = get_datum(&datastore, k);
+                match datum {
+                    None => {
+                        println!("Item {} not found", k)
+                    }
+                    Some(d) => {
+                        let x = d.lock().unwrap().clone();
+                        println!("Key {} retrieved {}", k, x);
+                    }
+                }
+            };
+
+            wrap_and_schedule(&mut threadpool, new_job);
+        }
+        ImperativeOps::Set(k, v) => {
+            let new_job = || {
+                let datum = get_datum(&datastore, k);
+                match datum {
+                    None => {
+                        datastore.lock().unwrap().insert(k, v);
+                    }
+                    Some(d) => {
+                        *d.lock().unwrap() = v;
+                    }
+                }
+            };
+            wrap_and_schedule(&mut threadpool, new_job);
+        }
+        ImperativeOps::SHUTDOWN => {
+            return true;
+        }
+    }
+    false
 }
 
 fn wrap_and_schedule(threadpool: &mut ThreadManager, new_job: fn()) {
