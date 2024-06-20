@@ -8,10 +8,12 @@ use crate::internal_lang::Type::*;
 * CURRENT STATUS:
 * Basic Read, write commands
 */
+pub type FakeDatum = u64;
 
-pub(crate) type KeyType = usize;
 
-pub(crate) enum ImperativeOps<T> {
+pub type KeyType = usize;
+
+pub enum ImperativeOps<T> {
     Get(KeyType),
     Set(KeyType, T),
     SHUTDOWN,

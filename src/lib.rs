@@ -1,13 +1,20 @@
 use std::sync::Arc;
-mod data_processor;
-mod thread_manager;
+use crate::internal_lang::ImperativeOps;
+use crate::web_server::FakeDatum;
+
+pub mod data_processor;
+pub mod thread_manager;
 
 #[macro_use]
 mod macros;
-mod internal_lang;
-mod web_server;
+pub mod internal_lang;
+pub mod web_server;
 
-enum Job {
+
+
+
+
+pub enum Job {
     Kill,
     Execute(Arc<dyn Fn() + Send + Sync>)
 }
@@ -20,3 +27,6 @@ fn executor(job: Job) {
         _ => {}
     }
 }
+
+// pub const SERVER: fn(usize, Vec<ImperativeOps<FakeDatum>>) = web_server::run_fake_web_server;
+

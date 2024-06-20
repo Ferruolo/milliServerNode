@@ -8,7 +8,7 @@ pub struct DataManager<T> {
 }
 
 impl<T> DataManager<T> {
-    pub(crate) fn new() -> Self <T> {
+    pub fn new() -> Self <T> {
         let initial_reserve: usize = 100; // Arbitrary Value
 
         let mut map: HashMap<KeyType, Arc<Mutex<T>>> = HashMap::new();
@@ -19,7 +19,7 @@ impl<T> DataManager<T> {
         };
     }
 
-    pub(crate) fn get_reference(&mut self, key: KeyType) -> Option<Arc<Mutex<T>>> {
+    pub fn get_reference(&mut self, key: KeyType) -> Option<Arc<Mutex<T>>> {
         match self.map.get_mut(&key) {
             None => {
                 None
@@ -30,7 +30,7 @@ impl<T> DataManager<T> {
         }
     }
 
-    pub(crate) fn insert(&mut self, key: KeyType, datum: T) -> Option<Arc<Mutex<T>>> {
+    pub fn insert(&mut self, key: KeyType, datum: T) -> Option<Arc<Mutex<T>>> {
         if self.prev_size <= self.map.len() {
             self.map.reserve(self.prev_size * 2);
             self.prev_size = self.map.len();

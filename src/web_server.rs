@@ -2,16 +2,16 @@ use std::collections::VecDeque;
 use std::sync::{Arc, Mutex};
 
 use crate::data_processor::DataManager;
-use crate::internal_lang::{ImperativeOps, KeyType};
+use crate::internal_lang::{FakeDatum, ImperativeOps, KeyType};
 use crate::Job::Execute;
 use crate::thread_manager::ThreadManager;
 
-type FakeDatum = u8;
+
 /*
 * Mocking up real world functionality before I start getting into parsing/command structure
 */
 
-fn run_fake_web_server(n_threads: usize, mut fake_commands: Vec<ImperativeOps<FakeDatum>>) {
+pub fn run_fake_web_server(n_threads: usize, mut fake_data: Vec<FakeDatum>, mut fake_commands: Vec<ImperativeOps<FakeDatum>>) {
     let mut operations: VecDeque<ImperativeOps<FakeDatum>> = Default::default();
 
     //Please tell me there's an easier way to copy between the two
@@ -19,6 +19,12 @@ fn run_fake_web_server(n_threads: usize, mut fake_commands: Vec<ImperativeOps<Fa
 
     let mut threadpool = ThreadManager::new(n_threads);
     let mut datastore: Arc<Mutex<DataManager<FakeDatum>>> = Arc::new(Mutex::new(DataManager::new()));
+
+    for (i, d) in fake_data.iter().enumerate() {
+        datastore.lock().unwrap().insert(i as KeyType, *d as FakeDatum);
+    }
+
+
 
     'fakeCommandLoop: while let Some(cmd) = operations.pop_front() {
         if handle_command(&mut threadpool, &mut datastore, cmd) {
