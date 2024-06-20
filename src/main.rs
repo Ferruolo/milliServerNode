@@ -8,11 +8,15 @@ const NUM_DATA_ENTRIES: u16 = 400;
 
 const NUM_OPERATIONS: u16 = 1000;
 
+const MAX_VAL: u16 = 200;
+
+const N_THREADS: usize = 4;
+
 fn main() {
     let mut initial_data: Vec<FakeDatum> = vec![];
     for _ in 0..NUM_DATA_ENTRIES {
-        let rand_num = thread_rng().gen_range(0..100);
-        initial_data.push(rand_num)
+        let rand_num = thread_rng().gen_range(0..MAX_VAL);
+        initial_data.push(rand_num as FakeDatum)
     }
 
     let mut commands_list: Vec<ImperativeOps<FakeDatum>> = vec![];
@@ -24,7 +28,7 @@ fn main() {
             {
                 // add Setter
                 let new_entry =
-                    thread_rng().gen_range(0..max_val) as FakeDatum;
+                    thread_rng().gen_range(0..MAX_VAL) as FakeDatum;
                 Set(key_num, new_entry)
             } else {
                 // add Getter

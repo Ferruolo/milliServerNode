@@ -8,7 +8,7 @@ pub struct DataManager<T> {
 }
 
 impl<T> DataManager<T> {
-    pub fn new() -> Self <T> {
+    pub fn new() -> Self {
         let initial_reserve: usize = 100; // Arbitrary Value
 
         let mut map: HashMap<KeyType, Arc<Mutex<T>>> = HashMap::new();

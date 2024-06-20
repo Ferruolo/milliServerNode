@@ -40,14 +40,17 @@ fn copy_vec_to_deque(vec: &mut Vec<ImperativeOps<FakeDatum>>, deque: &mut VecDeq
 }
 
 fn handle_command(
-    mut threadpool: &mut ThreadManager,
+    threadpool: &mut ThreadManager,
     datastore: &mut Arc<Mutex<DataManager<FakeDatum>>>,
     cmd: ImperativeOps<FakeDatum>)
     -> bool {
+    let ds_clone = datastore.clone();
+
     match cmd {
         ImperativeOps::Get(k) => {
-            let new_job = || {
-                let datum = get_datum(&datastore, k);
+
+            let new_job = move || {
+                let datum = get_datum(&ds_clone, k);
                 match datum {
                     None => {
                         println!("Item {} not found", k)
@@ -58,22 +61,23 @@ fn handle_command(
                     }
                 }
             };
-
-            wrap_and_schedule(&mut threadpool, new_job);
+            let wrapped_job = Arc::new(new_job);
+            threadpool.schedule(Execute(wrapped_job));
         }
         ImperativeOps::Set(k, v) => {
-            let new_job = || {
-                let datum = get_datum(&datastore, k);
+            let new_job = move || {
+                let datum = get_datum(&ds_clone, k);
                 match datum {
                     None => {
-                        datastore.lock().unwrap().insert(k, v);
+                        ds_clone.lock().unwrap().insert(k, v);
                     }
                     Some(d) => {
                         *d.lock().unwrap() = v;
                     }
                 }
             };
-            wrap_and_schedule(&mut threadpool, new_job);
+            let wrapped_job = Arc::new(new_job);
+            threadpool.schedule(Execute(wrapped_job));
         }
         ImperativeOps::SHUTDOWN => {
             return true;
@@ -82,10 +86,7 @@ fn handle_command(
     false
 }
 
-fn wrap_and_schedule(threadpool: &mut ThreadManager, new_job: fn()) {
-    let wrapped_job = Arc::new(Mutex::new(new_job));
-    threadpool.schedule(Execute(wrapped_job));
-}
+// TODO: Implement Wrap and Schedule (wrap jobs in ARC and schedule them)
 
 fn get_datum(datastore: &Arc<Mutex<DataManager<FakeDatum>>>, k: KeyType) -> Option<Arc<Mutex<FakeDatum>>> {
     let datum = {

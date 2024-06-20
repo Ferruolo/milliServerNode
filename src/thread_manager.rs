@@ -13,7 +13,6 @@ use crate::thread_manager::ThreadSignal::*;
 enum ThreadSignal {
     Task(Job),
     Available(usize, Sender<ThreadSignal>),
-    ParseJobComplete(),
     Null,
     Kill,
     ErrorInstruction,
