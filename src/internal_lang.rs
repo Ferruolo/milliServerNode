@@ -1,10 +1,8 @@
-
 /*
 * GOAL: Internal implementation of the simply typed lambda calculus, with extensions
 * Will be extended, optimized to work with database
 */
-use crate::internal_lang::Type::{*};
-
+use crate::internal_lang::Type::*;
 
 /*
 * CURRENT STATUS:
@@ -13,14 +11,11 @@ use crate::internal_lang::Type::{*};
 
 pub(crate) type KeyType = usize;
 
-pub(crate)  enum ImperativeOps<T> {
+pub(crate) enum ImperativeOps<T> {
     Get(KeyType),
     Set(KeyType, T),
-    SHUTDOWN
+    SHUTDOWN,
 }
-
-
-
 
 
 enum Type {
@@ -32,7 +27,7 @@ enum Type {
     Prod(Type, Type),
     Sum(Type, Type),
     Var(char),
-    Rec(Type)
+    Rec(Type),
 }
 
 enum Expressions {
@@ -72,14 +67,14 @@ enum Expressions {
     Case(Expressions, Expressions, Expressions),
     // Recursion
     Roll(Expressions),
-    Unroll(Expressions)
+    Unroll(Expressions),
 }
 
 union OpType {
-    value: Type, mutations: Expressions
+    value: Type,
+    mutations: Expressions,
 }
 
 fn subst(e_1: Expressions, a: Expressions, e_2: Expressions) { // Not sure how to do this one rn
-
 }
 

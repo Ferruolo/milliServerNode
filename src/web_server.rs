@@ -7,14 +7,16 @@ use crate::Job::Execute;
 use crate::thread_manager::ThreadManager;
 
 type FakeDatum = u8;
-
-
 /*
 * Mocking up real world functionality before I start getting into parsing/command structure
 */
 
-fn run_fake_web_server(n_threads: usize) {
+fn run_fake_web_server(n_threads: usize, mut fake_commands: Vec<ImperativeOps<FakeDatum>>) {
     let mut operations: VecDeque<ImperativeOps<FakeDatum>> = Default::default();
+
+    //Please tell me there's an easier way to copy between the two
+    copy_vec_to_deque(&mut fake_commands, &mut operations);
+
     let mut threadpool = ThreadManager::new(n_threads);
     let mut datastore: Arc<Mutex<DataManager<FakeDatum>>> = Arc::new(Mutex::new(DataManager::new()));
 
@@ -22,6 +24,12 @@ fn run_fake_web_server(n_threads: usize) {
         if handle_command(&mut threadpool, &mut datastore, cmd) {
             break 'fakeCommandLoop;
         }
+    }
+}
+
+fn copy_vec_to_deque(vec: &mut Vec<ImperativeOps<FakeDatum>>, deque: &mut VecDeque<ImperativeOps<FakeDatum>>) {
+    while let Some(item) = vec.pop() {
+        deque.push_front(item);
     }
 }
 
@@ -73,7 +81,6 @@ fn wrap_and_schedule(threadpool: &mut ThreadManager, new_job: fn()) {
     threadpool.schedule(Execute(wrapped_job));
 }
 
-#[inline] // Does this even do anything???
 fn get_datum(mut datastore: &Arc<Mutex<DataManager<FakeDatum>>>, k: KeyType) -> Option<Arc<Mutex<FakeDatum>>> {
     let datum = {
         let mut db = datastore.lock().unwrap();
@@ -82,6 +89,3 @@ fn get_datum(mut datastore: &Arc<Mutex<DataManager<FakeDatum>>>, k: KeyType) -> 
     };
     datum
 }
-
-
-
