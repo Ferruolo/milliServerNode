@@ -24,13 +24,13 @@ pub fn run_fake_web_server(n_threads: usize, fake_data: Vec<FakeDatum>, mut fake
         datastore.lock().unwrap().insert(i as KeyType, *d as FakeDatum);
     }
 
-
-
     'fakeCommandLoop: while let Some(cmd) = operations.pop_front() {
         if handle_command(&mut threadpool, &mut datastore, cmd) {
             break 'fakeCommandLoop;
         }
     }
+
+    threadpool.terminate();
 }
 
 fn copy_vec_to_deque(vec: &mut Vec<ImperativeOps<FakeDatum>>, deque: &mut VecDeque<ImperativeOps<FakeDatum>>) {

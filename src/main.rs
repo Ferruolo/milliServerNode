@@ -4,13 +4,17 @@ use serverNode::internal_lang::{FakeDatum, ImperativeOps, KeyType};
 use serverNode::internal_lang::ImperativeOps::{Get, Set};
 use serverNode::web_server::run_fake_web_server;
 
-const NUM_DATA_ENTRIES: u16 = 400;
 
-const NUM_OPERATIONS: u16 = 1000;
+// cargo run  846.61s user 8.23s system 99% cpu 14:19.16 total
 
-const MAX_VAL: u16 = 200;
 
-const N_THREADS: usize = 4;
+const NUM_DATA_ENTRIES: u32 = 1000000;
+
+const NUM_OPERATIONS: u32 = 1000000000;
+
+const MAX_VAL: FakeDatum = 200;
+
+const N_THREADS: usize = 8;
 
 fn main() {
     let mut initial_data: Vec<FakeDatum> = vec![];
