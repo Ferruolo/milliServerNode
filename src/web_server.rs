@@ -3,7 +3,6 @@ use std::sync::{Arc, Mutex};
 
 use crate::data_processor::DataManager;
 use crate::internal_lang::{FakeDatum, ImperativeOps, KeyType};
-use crate::Job::Execute;
 use crate::thread_manager::ThreadManager;
 
 
@@ -40,7 +39,7 @@ fn copy_vec_to_deque(vec: &mut Vec<ImperativeOps<FakeDatum>>, deque: &mut VecDeq
 }
 
 fn handle_command(
-    threadpool: &mut ThreadManager,
+    threadpool: &mut ThreadManager<T>,
     datastore: &mut Arc<Mutex<DataManager<FakeDatum>>>,
     cmd: ImperativeOps<FakeDatum>)
     -> bool {

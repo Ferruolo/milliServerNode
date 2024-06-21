@@ -5,8 +5,9 @@ use std::sync::mpsc::{Receiver, Sender};
 use std::thread;
 use std::thread::JoinHandle;
 use std::time::Duration;
+
 use crate::data_processor::DataManager;
-use crate::internal_lang::{execute, ImperativeOps, OperationsLang};
+use crate::internal_lang::{execute, FakeDatum, OperationsLang};
 use crate::thread_manager::ThreadSignal::*;
 
 //TODO: Write unit tests
@@ -32,12 +33,6 @@ pub struct ThreadManager<T> {
     master_mailbox: Sender<ThreadSignal<T>>,
     terminated: bool,
 }
-
-
-
-
-
-
 
 
 impl<T> DBWorker<T> {
@@ -82,14 +77,13 @@ impl<T> DBWorker<T> {
 }
 
 
-
-impl <T> ThreadManager<T> {
-    pub(crate) fn new(n_threads: usize) -> ThreadManager<T> {
+impl<T> ThreadManager<T> {
+    pub(crate) fn new(n_threads: usize, mut db_reference: &mut Arc<Mutex<DataManager<FakeDatum>>>) -> ThreadManager<T> {
         let mut threads = Vec::new();
 
         let (master_send, master_recv) = mpsc::channel();
         for i in 0..n_threads {
-            threads.push(DBWorker::new(i, &master_send));
+            threads.push(DBWorker::new(i, &master_send, &mut db_reference));
         }
 
 
@@ -161,9 +155,11 @@ impl <T> ThreadManager<T> {
         };
     }
 
-    pub fn schedule(&mut self, task: ImperativeOps<T>) {
+    pub fn schedule(&mut self, task: OperationsLang<T>) {
         if !self.terminated {
             self.master_mailbox.send(Task(task)).unwrap();
+        } else {
+            println!("Could not schedule task as manager is in termination process");
         }
     }
 
